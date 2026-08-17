@@ -1,0 +1,35 @@
+# Node
+node_modules/
+
+# Expo
+.expo/
+dist/
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.*
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Build
+build/
+coverage/
+
+# Android
+*.keystore
+
+# iOS
+ios/
+Pods/
+
+# Expo Native
+android/
+
+backend/src/config/*.json
