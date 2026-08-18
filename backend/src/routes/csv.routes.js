@@ -1,6 +1,5 @@
 import express from "express"
 import multer from "multer"
-import csv from "csv-parser";
 import { uploadCSV } from "../controllers/csv.controller.js"
 import authenticateUser from "../middleware/auth.middleware.js";
 

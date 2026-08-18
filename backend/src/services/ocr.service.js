@@ -1,28 +1,48 @@
 import vision from "@google-cloud/vision";
 
-const client = new vision.ImageAnnotatorClient();
+const client =
+  new vision.ImageAnnotatorClient();
 
-export const extractTextFromImage = async (buffer) => {
-  try {
-    const [result] = await client.textDetection({
-      image: {
-        content: buffer,
-      },
-    });
+export const extractTextFromImage =
+  async (buffer) => {
+    try {
+      const [result] =
+        await client.textDetection({
+          image: {
+            content: buffer,
+          },
+        });
 
-    const detections = result.textAnnotations;
+      const detections =
+        result.textAnnotations;
 
-    if (!detections || detections.length === 0) {
-      return "";
+      if (
+        !detections ||
+        detections.length === 0
+      ) {
+        return "";
+      }
+
+      const text =
+        detections[0].description || "";
+
+      console.log(
+        "========== OCR TEXT =========="
+      );
+
+      console.log(text);
+
+      console.log(
+        "=============================="
+      );
+
+      return text.trim();
+    } catch (error) {
+      console.error(
+        "OCR service error:",
+        error
+      );
+
+      throw error;
     }
-
-    // First annotation contains the complete detected text
-    const text = detections[0].description || "";
-
-    return text.trim();
-
-  } catch (error) {
-    console.error("OCR service error:", error);
-    throw error;
-  }
-};
+  };

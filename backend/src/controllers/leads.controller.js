@@ -6,15 +6,7 @@ import {
 
 export const createLead = async (req, res, next) => {
   try {
-    const clerkUserId = req.userId;
-
-    if (!clerkUserId) {
-      return res.status(401).json({
-        success: false,
-        message: "User is not authenticated",
-      });
-    }
-
+   
     const { name, phone, location } = req.body || {};
 
     if (!phone || !phone.trim()) {
@@ -25,7 +17,7 @@ export const createLead = async (req, res, next) => {
     }
 
     const lead = await createUserLead({
-      clerkUserId,
+      clerkUserId: req.userId,
       name: name?.trim() || null,
       phone: phone.trim(),
       location: location?.trim() || null,
@@ -43,16 +35,7 @@ export const createLead = async (req, res, next) => {
 
 export const getLeads = async (req, res, next) => {
   try {
-    const clerkUserId = req.userId;
-
-    if (!clerkUserId) {
-      return res.status(401).json({
-        success: false,
-        message: "User is not authenticated",
-      });
-    }
-
-    const leads = await getUserLeads(clerkUserId);
+    const leads = await getUserLeads(req.userId);
 
     return res.status(200).json({
       success: true,
@@ -64,18 +47,10 @@ export const getLeads = async (req, res, next) => {
   }
 }
 
-
 export const deleteLead = async (req, res, next) => {
   try {
-    const clerkUserId = req.userId;
+    
     const { id } = req.params;
-
-    if (!clerkUserId) {
-      return res.status(401).json({
-        success: false,
-        message: "User is not authenticated",
-      });
-    }
 
     if (!id) {
       return res.status(400).json({
@@ -86,7 +61,7 @@ export const deleteLead = async (req, res, next) => {
 
     const deletedLead = await deleteUserLead({
       leadId: id,
-      clerkUserId,
+      clerkUserId: req.userId
     });
 
     return res.status(200).json({

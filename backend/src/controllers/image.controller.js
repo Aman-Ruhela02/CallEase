@@ -12,7 +12,6 @@ export const uploadImage = async(req,res,next)=>{
             })
         }
 
-        
             const clerkUserId = req.userId;
             if (!clerkUserId) {
                 console.log('clerk id not found ');
@@ -37,8 +36,7 @@ export const uploadImage = async(req,res,next)=>{
       req.file.buffer
     );
 
-    console.log("OCR TEXT:");
-    console.log(text);
+    
 
     if (!text.trim()) {
       return res.status(400).json({
@@ -66,15 +64,17 @@ export const uploadImage = async(req,res,next)=>{
     });
 
     // Response 
-        return res.status(200).json({
-      success: true,
-      message: "Image OCR completed successfully",
-      file: {
-        name: req.file.originalname,
-        size: req.file.size,
-        type: req.file.mimetype,
-      },
-    });
+   return res.status(200).json({
+  success: true,
+  message: "Image OCR completed successfully",
+  count: savedLeads.length,
+  data: savedLeads,
+  file: {
+    name: req.file.originalname,
+    size: req.file.size,
+    type: req.file.mimetype,
+  },
+});
         
         
     } catch (error) {

@@ -1,78 +1,122 @@
-const phoneRegex = /^\d{10}$/;
+const normalizeText = (value) => {
+  return String(value ?? "")
+    .replace(/\r/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+};
 
-const headerWords = [
-  "name",
-  "names",
-  "location",
-  "locations",
-  "city",
-  "cities",
-  "phone",
-  "phone number",
-  "number",
-  "mobile",
-  "mobile number",
-];
+// ------------------------------------
+// PHONE
+// ------------------------------------
 
-const isHeader = (line) => {
-  return headerWords.includes(
-    line.toLowerCase().trim()
-  );
+const normalizePhone = (value) => {
+  if (!value) return "";
+
+  let phone = String(value)
+    .trim()
+    .replace(/[^\d+]/g, "");
+
+  if (phone.startsWith("+91")) {
+    phone = phone.slice(3);
+  } else if (
+    phone.startsWith("91") &&
+    phone.length === 12
+  ) {
+    phone = phone.slice(2);
+  }
+
+  return phone;
 };
 
 const isPhone = (line) => {
-  return phoneRegex.test(
-    line.replace(/\s+/g, "").trim()
-  );
+  const phone = normalizePhone(line);
+
+  return /^\d{10}$/.test(phone);
 };
+
+// ------------------------------------
+// HEADERS
+// ------------------------------------
+
+const HEADER_WORDS = new Set([
+  "name",
+  "fullname",
+  "full name",
+  "customer",
+  "customer name",
+  "client",
+  "client name",
+  "contact name",
+
+  "location",
+  "city",
+  "address",
+  "area",
+  "place",
+  "district",
+  "state",
+  "region",
+
+  "phone",
+  "phone number",
+  "phone no",
+  "mobile",
+  "mobile number",
+  "mobile no",
+  "number",
+  "contact",
+  "contact number",
+  "contact no",
+  "telephone",
+  "telephone number",
+]);
+
+const isHeader = (line) => {
+  const normalized = normalizeText(line)
+    .toLowerCase();
+
+  return HEADER_WORDS.has(normalized);
+};
+
+// ------------------------------------
+// CLEAN OCR
+// ------------------------------------
 
 const cleanLines = (text) => {
   return text
     .split("\n")
-    .map((line) => line.trim())
+    .map(normalizeText)
     .filter(Boolean)
     .filter((line) => !isHeader(line));
 };
 
-const isLikelyLocation = (line) => {
-  if (!line) return false;
+// ------------------------------------
+// TEXT CHARACTERISTICS
+// ------------------------------------
 
-  const value = line.toLowerCase();
-
-  const locationWords = [
-    "delhi",
-    "noida",
-    "ghaziabad",
-    "meerut",
-    "lucknow",
-    "jaipur",
-    "agra",
-    "chandigarh",
-    "gurgaon",
-    "gurugram",
-    "mumbai",
-    "pune",
-    "bangalore",
-    "bengaluru",
-    "hyderabad",
-    "kolkata",
-    "chennai",
-    "ahmedabad",
-    "dehradun",
-    "rajasthan",
-    "uttar pradesh",
-    "haryana",
-    "maharashtra",
-    "karnataka",
-    "telangana",
-    "uttarakhand",
-    "punjab",
-  ];
-
-  return locationWords.some((word) =>
-    value.includes(word)
-  );
+const containsLetters = (line) => {
+  return /[a-zA-Z]/.test(line);
 };
+
+const containsNumbers = (line) => {
+  return /\d/.test(line);
+};
+
+const isMostlyNumeric = (line) => {
+  const digits = (
+    line.match(/\d/g) || []
+  ).length;
+
+  const letters = (
+    line.match(/[a-zA-Z]/g) || []
+  ).length;
+
+  return digits > letters;
+};
+
+// ------------------------------------
+// NAME DETECTION
+// ------------------------------------
 
 const isLikelyName = (line) => {
   if (!line) return false;
@@ -81,114 +125,387 @@ const isLikelyName = (line) => {
 
   if (isHeader(line)) return false;
 
-  if (isLikelyLocation(line)) return false;
+  if (!containsLetters(line)) {
+    return false;
+  }
 
-  // Name should contain letters
-  if (!/[a-zA-Z]/.test(line)) return false;
+  if (line.length > 60) {
+    return false;
+  }
+
+  if (containsNumbers(line)) {
+    return false;
+  }
+
+  // A name normally contains at least
+  // one alphabetic word.
+  const words = line.split(" ");
+
+  if (words.length > 6) {
+    return false;
+  }
 
   return true;
 };
 
-export const parseImageLeads = (text) => {
-  const lines = cleanLines(text);
+// ------------------------------------
+// LOCATION DETECTION
+// ------------------------------------
 
-  console.log("Cleaned OCR lines:", lines);
+const isLikelyLocation = (line) => {
+  if (!line) return false;
 
-  const phones = lines.filter(isPhone);
+  if (isPhone(line)) return false;
 
-  console.log("Detected phones:", phones);
+  if (isHeader(line)) return false;
 
-  if (!phones.length) {
+  if (!containsLetters(line)) {
+    return false;
+  }
+
+  if (line.length > 80) {
+    return false;
+  }
+
+  if (containsNumbers(line)) {
+    return false;
+  }
+
+  return true;
+};
+
+// ------------------------------------
+// SCORE NAME
+// ------------------------------------
+
+const scoreName = (
+  line,
+  distance,
+  direction
+) => {
+  if (!isLikelyName(line)) {
+    return -Infinity;
+  }
+
+  let score = 0;
+
+  // Prefer lines immediately before
+  // the phone number.
+  if (direction === "before") {
+    score += 5;
+  }
+
+  if (distance === 1) {
+    score += 5;
+  }
+
+  if (distance === 2) {
+    score += 3;
+  }
+
+  if (distance === 3) {
+    score += 1;
+  }
+
+  // Names commonly have 2-4 words.
+  const words = line.split(" ");
+
+  if (words.length >= 2) {
+    score += 3;
+  }
+
+  if (
+    words.length >= 2 &&
+    words.length <= 4
+  ) {
+    score += 2;
+  }
+
+  // Avoid extremely short values.
+  if (line.length >= 3) {
+    score += 1;
+  }
+
+  return score;
+};
+
+// ------------------------------------
+// SCORE LOCATION
+// ------------------------------------
+
+const scoreLocation = (
+  line,
+  distance,
+  direction
+) => {
+  if (!isLikelyLocation(line)) {
+    return -Infinity;
+  }
+
+  let score = 0;
+
+  // Locations can appear either before
+  // or after the phone.
+  if (distance === 1) {
+    score += 4;
+  }
+
+  if (distance === 2) {
+    score += 3;
+  }
+
+  if (distance === 3) {
+    score += 1;
+  }
+
+  // A location is often shorter than
+  // a person's full name.
+  const words = line.split(" ");
+
+  if (words.length <= 5) {
+    score += 2;
+  }
+
+  // Address/location-like words.
+  const locationHints = [
+    "road",
+    "street",
+    "nagar",
+    "colony",
+    "sector",
+    "phase",
+    "market",
+    "society",
+    "vihar",
+    "puram",
+    "extension",
+    "block",
+    "district",
+    "state",
+    "town",
+  ];
+
+  const lower = line.toLowerCase();
+
+  for (const hint of locationHints) {
+    if (lower.includes(hint)) {
+      score += 4;
+      break;
+    }
+  }
+
+  return score;
+};
+
+// ------------------------------------
+// FIND NEARBY CANDIDATES
+// ------------------------------------
+
+const getNearbyCandidates = (
+  lines,
+  phoneIndex
+) => {
+  const candidates = [];
+
+  // Look before phone.
+  for (
+    let i = phoneIndex - 1;
+    i >= Math.max(0, phoneIndex - 4);
+    i--
+  ) {
+    candidates.push({
+      line: lines[i],
+      distance: phoneIndex - i,
+      direction: "before",
+      index: i,
+    });
+  }
+
+  // Look after phone.
+  for (
+    let i = phoneIndex + 1;
+    i <=
+    Math.min(
+      lines.length - 1,
+      phoneIndex + 4
+    );
+    i++
+  ) {
+    candidates.push({
+      line: lines[i],
+      distance: i - phoneIndex,
+      direction: "after",
+      index: i,
+    });
+  }
+
+  return candidates;
+};
+
+// ------------------------------------
+// PARSER
+// ------------------------------------
+
+export const parseImageLeads = (
+  text
+) => {
+  if (!text) {
     return [];
   }
 
+  const lines = cleanLines(text);
+
+  console.log(
+    "Cleaned OCR lines:",
+    lines
+  );
+
   const leads = [];
 
-  /*
-  --------------------------------
-  STEP 1
-  Find every phone number.
-  --------------------------------
-  */
+  for (
+    let i = 0;
+    i < lines.length;
+    i++
+  ) {
+    const currentLine = lines[i];
 
-  for (let i = 0; i < lines.length; i++) {
-
-    if (!isPhone(lines[i])) {
+    if (!isPhone(currentLine)) {
       continue;
     }
 
-    const phone = lines[i];
+    const phone =
+      normalizePhone(currentLine);
 
-    let name = null;
-    let location = null;
+    const candidates =
+      getNearbyCandidates(
+        lines,
+        i
+      );
 
-    /*
-    Look backwards for name/location
-    */
-
-    const previousLines = lines
-      .slice(Math.max(0, i - 4), i)
-      .reverse();
-
-    for (const line of previousLines) {
-
-      if (!location && isLikelyLocation(line)) {
-        location = line;
-        continue;
-      }
-
-      if (!name && isLikelyName(line)) {
-        name = line;
-      }
-
-      if (name && location) {
-        break;
-      }
-    }
-
-    /*
-    Look forward if something is missing.
-    */
-
-    const nextLines = lines.slice(
-      i + 1,
-      Math.min(lines.length, i + 4)
+    console.log(
+      `Candidates for phone ${phone}:`,
+      candidates
     );
 
-    for (const line of nextLines) {
+    // --------------------------------
+    // NAME
+    // --------------------------------
 
-      if (!location && isLikelyLocation(line)) {
-        location = line;
-        continue;
-      }
+    const nameCandidates =
+      candidates
+        .map((candidate) => ({
+          ...candidate,
+          score: scoreName(
+            candidate.line,
+            candidate.distance,
+            candidate.direction
+          ),
+        }))
+        .filter(
+          (candidate) =>
+            candidate.score > -Infinity
+        )
+        .sort(
+          (a, b) =>
+            b.score - a.score
+        );
 
-      if (!name && isLikelyName(line)) {
-        name = line;
-      }
+    // --------------------------------
+    // LOCATION
+    // --------------------------------
 
-      if (name && location) {
+    const locationCandidates =
+      candidates
+        .map((candidate) => ({
+          ...candidate,
+          score: scoreLocation(
+            candidate.line,
+            candidate.distance,
+            candidate.direction
+          ),
+        }))
+        .filter(
+          (candidate) =>
+            candidate.score > -Infinity
+        )
+        .sort(
+          (a, b) =>
+            b.score - a.score
+        );
+
+    let name =
+      nameCandidates[0]?.line ||
+      null;
+
+    let location = null;
+
+    // --------------------------------
+    // Prevent same line being used
+    // for name and location
+    // --------------------------------
+
+    for (
+      const candidate of locationCandidates
+    ) {
+      if (
+        candidate.line !== name
+      ) {
+        location =
+          candidate.line;
+
         break;
       }
     }
 
-    /*
-    Only save a lead if we have
-    a phone + name + location.
-    */
+    // --------------------------------
+    // FALLBACK
+    // --------------------------------
 
-    if (phone && name && location) {
-      leads.push({
-        name,
-        phone,
-        location,
-      });
+    // If only one text line exists
+    // around the phone, treat it as name.
+    if (
+      !name &&
+      locationCandidates.length
+    ) {
+      name =
+        locationCandidates[0].line;
     }
+
+    leads.push({
+      name,
+      phone,
+      location,
+    });
+  }
+
+  // --------------------------------
+  // REMOVE DUPLICATES
+  // --------------------------------
+
+  const uniqueLeads = [];
+
+  const seenPhones =
+    new Set();
+
+  for (const lead of leads) {
+    if (
+      !lead.phone ||
+      seenPhones.has(lead.phone)
+    ) {
+      continue;
+    }
+
+    seenPhones.add(
+      lead.phone
+    );
+
+    uniqueLeads.push(lead);
   }
 
   console.log(
     "Parsed image leads:",
-    leads
+    uniqueLeads
   );
 
-  return leads;
+  return uniqueLeads;
 };

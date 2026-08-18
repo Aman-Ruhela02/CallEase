@@ -6,7 +6,10 @@ const normalizeHeader = (header) => {
 };
 
 const normalizeValue = (value) => {
-  if (value === null || value === undefined) {
+  if (
+    value === null ||
+    value === undefined
+  ) {
     return "";
   }
 
@@ -55,29 +58,34 @@ const LOCATION_HEADERS = [
   "village",
 ];
 
-const findValue = (normalizedRow, headers) => {
+const findValue = (
+  normalizedRow,
+  headers
+) => {
   for (const header of headers) {
     const value = normalizedRow[header];
 
-    if (value !== undefined && value !== null) {
-      const cleaned = normalizeValue(value);
-
-      if (cleaned) {
-        return cleaned;
-      }
+    if (
+      value !== undefined &&
+      value !== null &&
+      normalizeValue(value)
+    ) {
+      return normalizeValue(value);
     }
   }
 
   return null;
 };
 
-export const mapCSVRow = (row) => {
+export const mapLeadRow = (row) => {
   const normalizedRow = {};
 
-  Object.entries(row).forEach(([key, value]) => {
-    normalizedRow[normalizeHeader(key)] =
-      normalizeValue(value);
-  });
+  Object.entries(row).forEach(
+    ([key, value]) => {
+      normalizedRow[normalizeHeader(key)] =
+        normalizeValue(value);
+    }
+  );
 
   return {
     name: findValue(
@@ -97,4 +105,26 @@ export const mapCSVRow = (row) => {
   };
 };
 
-export { normalizeHeader };
+export const normalizePhone = (phone) => {
+  if (!phone) return null;
+
+  let value = String(phone)
+    .trim()
+    .replace(/\.0+$/, "")
+    .replace(/[^\d+]/g, "");
+
+  // Remove India country code
+  if (value.startsWith("+91")) {
+    value = value.substring(3);
+  }
+
+  if (value.startsWith("91") && value.length === 12) {
+    value = value.substring(2);
+  }
+
+  if (value.startsWith("0") && value.length === 11) {
+    value = value.substring(1);
+  }
+
+  return value;
+};

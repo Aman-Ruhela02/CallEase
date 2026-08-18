@@ -25,14 +25,28 @@ export const saveUserLeads = async ({
   clerkUserId,
   leads,
 }) => {
-  const leadsWithUser = leads.map((lead) => ({
-    clerk_user_id: clerkUserId,
-    name: lead.name,
-    phone: lead.phone,
-    location: lead.location,
-  }));
+  const leadsWithUser = leads
+    .filter((lead) => lead.phone)
+    .map((lead) => ({
+      clerk_user_id: clerkUserId,
 
-  return await createLead(leadsWithUser);
+      name:
+        lead.name?.trim() || null,
+
+      phone:
+        lead.phone?.trim() || null,
+
+      location:
+        lead.location?.trim() || null,
+    }));
+
+  if (!leadsWithUser.length) {
+    return [];
+  }
+
+  return await createLead(
+    leadsWithUser
+  );
 };
 
 export const getUserLeads = async (clerkUserId) => {
