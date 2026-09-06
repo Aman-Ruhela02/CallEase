@@ -10,6 +10,8 @@ export const createLead = async (leads) => {
     .select();
 
   if (error) {
+    console.log("lead not creATED",error);
+    
     throw error;
   }
 

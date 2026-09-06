@@ -73,6 +73,8 @@ export default function useLeads() {
           );
         }
       } catch (error) {
+        console.log("error in useLeads:", error);
+        
         console.log("Get leads error:", error);
 
         setError(

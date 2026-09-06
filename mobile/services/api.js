@@ -2,7 +2,7 @@ import axios from "axios";
 
 const API_URL =
   process.env.EXPO_PUBLIC_API_URL ||
-  "http://192.168.1.8:3000";
+  "http://192.168.1.9:3000";
 
 console.log(
   "API URL:",
