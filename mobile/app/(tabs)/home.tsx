@@ -31,7 +31,7 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
-  const API_URL = "http://192.168.1.14:3000";
+  const API_URL = "https://callease.onrender.com";
 
   const userName = user?.firstName || user?.username || "there";
 
