@@ -1,21 +1,18 @@
 import supabase from "../lib/supabase.js";
 
-export const createProfile = async ({
-  clerkUserId,
-  name,
-  email,
-}) => {
+export const createProfile = async ({ clerkUserId, name, email }) => {
   const { data, error } = await supabase
     .from("profiles")
-    .upsert({
-      clerk_user_id: clerkUserId,
-      name,
-      email,
-    },
-   {
-    onConflict : "clerk_user_id",
-   }
-  )
+    .upsert(
+      {
+        clerk_user_id: clerkUserId,
+        name,
+        email,
+      },
+      {
+        onConflict: "clerk_user_id",
+      },
+    )
     .select()
     .single();
 
@@ -24,20 +21,18 @@ export const createProfile = async ({
   }
 
   return data;
-}
+};
 
-
-export const getProfileByClerkId = async (clerkUserId)=>{
-    const {data,error} = await supabase 
+export const getProfileByClerkId = async (clerkUserId) => {
+  const { data, error } = await supabase
     .from("profiles")
     .select("*")
-    .eq("clerk_user_id",clerkUserId)
-    .single()
+    .eq("clerk_user_id", clerkUserId)
+    .single();
 
-    if (error) {
+  if (error) {
     throw error;
   }
 
   return data;
-}
-
+};

@@ -1,9 +1,9 @@
-import express from 'express'
-import { successResponse } from '../utils/apiResponse.js'
-import { getHealth } from '../controllers/health.controller.js'
+import express from "express";
+import { successResponse } from "../utils/apiResponse.js";
+import { getHealth } from "../controllers/health.controller.js";
 
-const router = express.Router()
+const router = express.Router();
 
-router.get('/',getHealth)
+router.get("/", getHealth);
 
-export default router 
+export default router;

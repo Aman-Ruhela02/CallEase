@@ -6,10 +6,7 @@ const normalizeHeader = (header) => {
 };
 
 const normalizeValue = (value) => {
-  if (
-    value === null ||
-    value === undefined
-  ) {
+  if (value === null || value === undefined) {
     return "";
   }
 
@@ -58,18 +55,11 @@ const LOCATION_HEADERS = [
   "village",
 ];
 
-const findValue = (
-  normalizedRow,
-  headers
-) => {
+const findValue = (normalizedRow, headers) => {
   for (const header of headers) {
     const value = normalizedRow[header];
 
-    if (
-      value !== undefined &&
-      value !== null &&
-      normalizeValue(value)
-    ) {
+    if (value !== undefined && value !== null && normalizeValue(value)) {
       return normalizeValue(value);
     }
   }
@@ -80,28 +70,16 @@ const findValue = (
 export const mapLeadRow = (row) => {
   const normalizedRow = {};
 
-  Object.entries(row).forEach(
-    ([key, value]) => {
-      normalizedRow[normalizeHeader(key)] =
-        normalizeValue(value);
-    }
-  );
+  Object.entries(row).forEach(([key, value]) => {
+    normalizedRow[normalizeHeader(key)] = normalizeValue(value);
+  });
 
   return {
-    name: findValue(
-      normalizedRow,
-      NAME_HEADERS
-    ),
+    name: findValue(normalizedRow, NAME_HEADERS),
 
-    phone: findValue(
-      normalizedRow,
-      PHONE_HEADERS
-    ),
+    phone: findValue(normalizedRow, PHONE_HEADERS),
 
-    location: findValue(
-      normalizedRow,
-      LOCATION_HEADERS
-    ),
+    location: findValue(normalizedRow, LOCATION_HEADERS),
   };
 };
 

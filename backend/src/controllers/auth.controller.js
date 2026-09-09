@@ -1,5 +1,3 @@
-
-
 import { getAuth } from "@clerk/express";
 import { successResponse } from "../utils/apiResponse.js";
 
@@ -19,7 +17,7 @@ export const getCurrentUser = (req, res, next) => {
       {
         userId,
       },
-      "Authenticated user"
+      "Authenticated user",
     );
   } catch (error) {
     next(error);

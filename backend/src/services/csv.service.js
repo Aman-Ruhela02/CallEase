@@ -12,8 +12,7 @@ export const parseCSV = (buffer) => {
     stream
       .pipe(
         csv({
-          mapHeaders: ({ header }) =>
-            header?.replace(/^\uFEFF/, "").trim(),
+          mapHeaders: ({ header }) => header?.replace(/^\uFEFF/, "").trim(),
         }),
       )
       .on("data", (row) => {

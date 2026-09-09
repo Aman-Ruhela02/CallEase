@@ -1,11 +1,9 @@
-import express from "express"
+import express from "express";
 // import {requireAuth} from "@clerk/express"
-import { getCurrentUser } from "../controllers/auth.controller.js"
+import { getCurrentUser } from "../controllers/auth.controller.js";
 
+const router = express.Router();
 
-const router = express.Router()
+router.get("/me", getCurrentUser);
 
-router.get('/me',getCurrentUser)
-
-
-export default router 
+export default router;

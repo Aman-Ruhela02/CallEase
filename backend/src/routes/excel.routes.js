@@ -12,6 +12,6 @@ const upload = multer({
   },
 });
 
-router.post("/excel",authenticateUser,upload.single("file"),uploadExcel);
+router.post("/excel", authenticateUser, upload.single("file"), uploadExcel);
 
-export default router;  
+export default router;
