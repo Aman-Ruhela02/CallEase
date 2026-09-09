@@ -1,10 +1,9 @@
-import express from "express"
+import express from "express";
 
-import { testSupabase } from "../controllers/supabase.controller.js"
+import { testSupabase } from "../controllers/supabase.controller.js";
 
-const router = express.Router()
+const router = express.Router();
 
+router.get("/test", testSupabase);
 
-router.get('/test',testSupabase)
-
-export default router 
+export default router;

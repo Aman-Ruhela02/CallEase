@@ -68,11 +68,7 @@ const findField = (row, aliases) => {
   for (const [key, value] of entries) {
     const normalizedKey = normalizeKey(key);
 
-    if (
-      aliases.some(
-        (alias) => normalizeKey(alias) === normalizedKey
-      )
-    ) {
+    if (aliases.some((alias) => normalizeKey(alias) === normalizedKey)) {
       return value;
     }
   }
@@ -96,10 +92,7 @@ export const normalizePhone = (value) => {
   // Convert +91XXXXXXXXXX / 91XXXXXXXXXX to XXXXXXXXXX
   if (phone.startsWith("+91")) {
     phone = phone.slice(3);
-  } else if (
-    phone.startsWith("91") &&
-    phone.length === 12
-  ) {
+  } else if (phone.startsWith("91") && phone.length === 12) {
     phone = phone.slice(2);
   }
 
@@ -109,16 +102,12 @@ export const normalizePhone = (value) => {
 export const normalizeLeadRow = (row) => {
   const name = findField(row, FIELD_ALIASES.name);
   const phone = findField(row, FIELD_ALIASES.phone);
-  const location = findField(
-    row,
-    FIELD_ALIASES.location
-  );
+  const location = findField(row, FIELD_ALIASES.location);
 
   return {
     name: String(name || "").trim() || null,
     phone: normalizePhone(phone),
-    location:
-      String(location || "").trim() || null,
+    location: String(location || "").trim() || null,
   };
 };
 

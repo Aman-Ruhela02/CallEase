@@ -75,25 +75,15 @@ export const mapCSVRow = (row) => {
   const normalizedRow = {};
 
   Object.entries(row).forEach(([key, value]) => {
-    normalizedRow[normalizeHeader(key)] =
-      normalizeValue(value);
+    normalizedRow[normalizeHeader(key)] = normalizeValue(value);
   });
 
   return {
-    name: findValue(
-      normalizedRow,
-      NAME_HEADERS
-    ),
+    name: findValue(normalizedRow, NAME_HEADERS),
 
-    phone: findValue(
-      normalizedRow,
-      PHONE_HEADERS
-    ),
+    phone: findValue(normalizedRow, PHONE_HEADERS),
 
-    location: findValue(
-      normalizedRow,
-      LOCATION_HEADERS
-    ),
+    location: findValue(normalizedRow, LOCATION_HEADERS),
   };
 };
 
