@@ -21,42 +21,31 @@ export const createUserLead = async ({
   return await createLead(lead);
 };
 
-export const saveUserLeads = async ({
-  clerkUserId,
-  leads,
-}) => {
+export const saveUserLeads = async ({ clerkUserId, leads }) => {
   const leadsWithUser = leads
     .filter((lead) => lead.phone)
     .map((lead) => ({
       clerk_user_id: clerkUserId,
 
-      name:
-        lead.name?.trim() || null,
+      name: lead.name?.trim() || null,
 
-      phone:
-        lead.phone?.trim() || null,
+      phone: lead.phone?.trim() || null,
 
-      location:
-        lead.location?.trim() || null,
+      location: lead.location?.trim() || null,
     }));
 
   if (!leadsWithUser.length) {
     return [];
   }
 
-  return await createLead(
-    leadsWithUser
-  );
+  return await createLead(leadsWithUser);
 };
 
 export const getUserLeads = async (clerkUserId) => {
   return await getLeadsByClerkId(clerkUserId);
 };
 
-export const deleteUserLead = async ({
-  leadId,
-  clerkUserId,
-}) => {
+export const deleteUserLead = async ({ leadId, clerkUserId }) => {
   return await deleteLeadById(leadId, clerkUserId);
 };
 

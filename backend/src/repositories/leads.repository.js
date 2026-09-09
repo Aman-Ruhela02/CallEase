@@ -10,14 +10,14 @@ export const createLead = async (leads) => {
     .select();
 
   if (error) {
-    console.log("lead not creATED",error);
-    
+    console.log("lead not creATED", error);
+
     throw error;
   }
 
   return data;
 };
-    
+
 export const getLeadsByClerkId = async (clerkUserId) => {
   const { data, error } = await supabase
     .from("leads")
@@ -34,7 +34,6 @@ export const getLeadsByClerkId = async (clerkUserId) => {
   return data;
 };
 
-
 export const deleteLeadById = async (leadId, clerkUserId) => {
   const { data, error } = await supabase
     .from("leads")
@@ -49,7 +48,7 @@ export const deleteLeadById = async (leadId, clerkUserId) => {
   }
 
   return data;
-}
+};
 
 export const getLeadCountByClerkId = async (clerkUserId) => {
   const { count, error } = await supabase

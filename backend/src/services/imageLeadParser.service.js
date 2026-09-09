@@ -18,10 +18,7 @@ const normalizePhone = (value) => {
 
   if (phone.startsWith("+91")) {
     phone = phone.slice(3);
-  } else if (
-    phone.startsWith("91") &&
-    phone.length === 12
-  ) {
+  } else if (phone.startsWith("91") && phone.length === 12) {
     phone = phone.slice(2);
   }
 
@@ -72,8 +69,7 @@ const HEADER_WORDS = new Set([
 ]);
 
 const isHeader = (line) => {
-  const normalized = normalizeText(line)
-    .toLowerCase();
+  const normalized = normalizeText(line).toLowerCase();
 
   return HEADER_WORDS.has(normalized);
 };
@@ -103,13 +99,9 @@ const containsNumbers = (line) => {
 };
 
 const isMostlyNumeric = (line) => {
-  const digits = (
-    line.match(/\d/g) || []
-  ).length;
+  const digits = (line.match(/\d/g) || []).length;
 
-  const letters = (
-    line.match(/[a-zA-Z]/g) || []
-  ).length;
+  const letters = (line.match(/[a-zA-Z]/g) || []).length;
 
   return digits > letters;
 };
@@ -178,11 +170,7 @@ const isLikelyLocation = (line) => {
 // SCORE NAME
 // ------------------------------------
 
-const scoreName = (
-  line,
-  distance,
-  direction
-) => {
+const scoreName = (line, distance, direction) => {
   if (!isLikelyName(line)) {
     return -Infinity;
   }
@@ -214,10 +202,7 @@ const scoreName = (
     score += 3;
   }
 
-  if (
-    words.length >= 2 &&
-    words.length <= 4
-  ) {
+  if (words.length >= 2 && words.length <= 4) {
     score += 2;
   }
 
@@ -233,11 +218,7 @@ const scoreName = (
 // SCORE LOCATION
 // ------------------------------------
 
-const scoreLocation = (
-  line,
-  distance,
-  direction
-) => {
+const scoreLocation = (line, distance, direction) => {
   if (!isLikelyLocation(line)) {
     return -Infinity;
   }
@@ -301,18 +282,11 @@ const scoreLocation = (
 // FIND NEARBY CANDIDATES
 // ------------------------------------
 
-const getNearbyCandidates = (
-  lines,
-  phoneIndex
-) => {
+const getNearbyCandidates = (lines, phoneIndex) => {
   const candidates = [];
 
   // Look before phone.
-  for (
-    let i = phoneIndex - 1;
-    i >= Math.max(0, phoneIndex - 4);
-    i--
-  ) {
+  for (let i = phoneIndex - 1; i >= Math.max(0, phoneIndex - 4); i--) {
     candidates.push({
       line: lines[i],
       distance: phoneIndex - i,
@@ -324,11 +298,7 @@ const getNearbyCandidates = (
   // Look after phone.
   for (
     let i = phoneIndex + 1;
-    i <=
-    Math.min(
-      lines.length - 1,
-      phoneIndex + 4
-    );
+    i <= Math.min(lines.length - 1, phoneIndex + 4);
     i++
   ) {
     candidates.push({
@@ -346,96 +316,63 @@ const getNearbyCandidates = (
 // PARSER
 // ------------------------------------
 
-export const parseImageLeads = (
-  text
-) => {
+export const parseImageLeads = (text) => {
   if (!text) {
     return [];
   }
 
   const lines = cleanLines(text);
 
-  console.log(
-    "Cleaned OCR lines:",
-    lines
-  );
+  console.log("Cleaned OCR lines:", lines);
 
   const leads = [];
 
-  for (
-    let i = 0;
-    i < lines.length;
-    i++
-  ) {
+  for (let i = 0; i < lines.length; i++) {
     const currentLine = lines[i];
 
     if (!isPhone(currentLine)) {
       continue;
     }
 
-    const phone =
-      normalizePhone(currentLine);
+    const phone = normalizePhone(currentLine);
 
-    const candidates =
-      getNearbyCandidates(
-        lines,
-        i
-      );
+    const candidates = getNearbyCandidates(lines, i);
 
-    console.log(
-      `Candidates for phone ${phone}:`,
-      candidates
-    );
+    console.log(`Candidates for phone ${phone}:`, candidates);
 
     // --------------------------------
     // NAME
     // --------------------------------
 
-    const nameCandidates =
-      candidates
-        .map((candidate) => ({
-          ...candidate,
-          score: scoreName(
-            candidate.line,
-            candidate.distance,
-            candidate.direction
-          ),
-        }))
-        .filter(
-          (candidate) =>
-            candidate.score > -Infinity
-        )
-        .sort(
-          (a, b) =>
-            b.score - a.score
-        );
+    const nameCandidates = candidates
+      .map((candidate) => ({
+        ...candidate,
+        score: scoreName(
+          candidate.line,
+          candidate.distance,
+          candidate.direction,
+        ),
+      }))
+      .filter((candidate) => candidate.score > -Infinity)
+      .sort((a, b) => b.score - a.score);
 
     // --------------------------------
     // LOCATION
     // --------------------------------
 
-    const locationCandidates =
-      candidates
-        .map((candidate) => ({
-          ...candidate,
-          score: scoreLocation(
-            candidate.line,
-            candidate.distance,
-            candidate.direction
-          ),
-        }))
-        .filter(
-          (candidate) =>
-            candidate.score > -Infinity
-        )
-        .sort(
-          (a, b) =>
-            b.score - a.score
-        );
+    const locationCandidates = candidates
+      .map((candidate) => ({
+        ...candidate,
+        score: scoreLocation(
+          candidate.line,
+          candidate.distance,
+          candidate.direction,
+        ),
+      }))
+      .filter((candidate) => candidate.score > -Infinity)
+      .sort((a, b) => b.score - a.score);
 
-    let name =
-      nameCandidates[0]?.line ||
-      null;
+    let name = nameCandidates[0]?.line || null;
 
     let location = null;
 
@@ -444,14 +381,9 @@ export const parseImageLeads = (
     // for name and location
     // --------------------------------
 
-    for (
-      const candidate of locationCandidates
-    ) {
-      if (
-        candidate.line !== name
-      ) {
-        location =
-          candidate.line;
+    for (const candidate of locationCandidates) {
+      if (candidate.line !== name) {
+        location = candidate.line;
 
         break;
       }
@@ -463,12 +395,8 @@ export const parseImageLeads = (
 
     // If only one text line exists
     // around the phone, treat it as name.
-    if (
-      !name &&
-      locationCandidates.length
-    ) {
-      name =
-        locationCandidates[0].line;
+    if (!name && locationCandidates.length) {
+      name = locationCandidates[0].line;
     }
 
     leads.push({
@@ -484,28 +412,19 @@ export const parseImageLeads = (
 
   const uniqueLeads = [];
 
-  const seenPhones =
-    new Set();
+  const seenPhones = new Set();
 
   for (const lead of leads) {
-    if (
-      !lead.phone ||
-      seenPhones.has(lead.phone)
-    ) {
+    if (!lead.phone || seenPhones.has(lead.phone)) {
       continue;
     }
 
-    seenPhones.add(
-      lead.phone
-    );
+    seenPhones.add(lead.phone);
 
     uniqueLeads.push(lead);
   }
 
-  console.log(
-    "Parsed image leads:",
-    uniqueLeads
-  );
+  console.log("Parsed image leads:", uniqueLeads);
 
   return uniqueLeads;
 };
