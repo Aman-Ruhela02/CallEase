@@ -9,21 +9,13 @@ export const extractTextFromImage = async (buffer) => {
         content: buffer,
       },
     });
-
     const detections = result.textAnnotations;
-
     if (!detections || detections.length === 0) {
       return "";
     }
-
     const text = detections[0].description || "";
-
-    console.log(text);
-
     return text.trim();
   } catch (error) {
-    console.error("OCR service error:", error);
-
     throw error;
   }
 };

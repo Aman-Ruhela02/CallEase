@@ -3,31 +3,21 @@ import {
   getUserLeads,
   deleteUserLead,
 } from "../services/leads.service.js";
+import { errorResponse, successResponse } from "../utils/apiResponse.js";
 
 export const createLead = async (req, res, next) => {
   try {
-   
     const { name, phone, location } = req.body || {};
-
     if (!phone || !phone.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: "Phone number is required",
-      });
+      return errorResponse(res, "Phone number is required", 400);
     }
-
     const lead = await createUserLead({
       clerkUserId: req.userId,
       name: name?.trim() || null,
       phone: phone.trim(),
       location: location?.trim() || null,
     });
-
-    return res.status(201).json({
-      success: true,
-      message: "Lead created successfully",
-      data: lead,
-    });
+    return successResponse(res, lead, "Lead created successfully", 201);
   } catch (error) {
     next(error);
   }
@@ -36,39 +26,23 @@ export const createLead = async (req, res, next) => {
 export const getLeads = async (req, res, next) => {
   try {
     const leads = await getUserLeads(req.userId);
-
-    return res.status(200).json({
-      success: true,
-      message: "Leads fetched successfully",
-      data: leads,
-    });
+    return successResponse(res, leads, "Leads fetched successfully");
   } catch (error) {
     next(error);
   }
-}
+};
 
 export const deleteLead = async (req, res, next) => {
   try {
-    
     const { id } = req.params;
-
     if (!id) {
-      return res.status(400).json({
-        success: false,
-        message: "Lead ID is required",
-      });
+      return errorResponse(res, "Lead ID is required", 400);
     }
-
     const deletedLead = await deleteUserLead({
       leadId: id,
-      clerkUserId: req.userId
+      clerkUserId: req.userId,
     });
-
-    return res.status(200).json({
-      success: true,
-      message: "Lead deleted successfully",
-      data: deletedLead,
-    });
+    return successResponse(res, deletedLead, "Lead deleted successfully");
   } catch (error) {
     next(error);
   }

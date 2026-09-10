@@ -19,7 +19,6 @@ export const createProfile = async ({ clerkUserId, name, email }) => {
   if (error) {
     throw error;
   }
-
   return data;
 };
 
@@ -33,6 +32,5 @@ export const getProfileByClerkId = async (clerkUserId) => {
   if (error) {
     throw error;
   }
-
   return data;
 };
