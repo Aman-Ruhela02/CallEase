@@ -1,9 +1,10 @@
 import express from "express";
 import { successResponse } from "../utils/apiResponse.js";
-import { getHealth } from "../controllers/health.controller.js";
 
 const router = express.Router();
 
-router.get("/", getHealth);
+router.get("/", (req, res) => {
+    successResponse(res, { server: "Call Ease Backend", version: "1.0.0", status: "healthy" }, "Backend is running healthy");
+});
 
 export default router;
