@@ -1,5 +1,6 @@
 import AppError from "../utils/AppError.js";
 
 export default function notFound(req, res, next) {
-  next(new AppError(`Route '${req.originalUrl}' not found`, 404));
+  const message = `Route '${req.originalUrl}' not found`
+  next(new AppError(message, 404));
 }

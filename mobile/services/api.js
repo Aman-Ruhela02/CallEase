@@ -1,15 +1,11 @@
-import axios from "axios";
+import { create } from "axios";
 
 const API_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  "https://callease.onrender.com";
+  process.env.EXPO_PUBLIC_API_URL || "https://callease.onrender.com";
 
-console.log(
-  "API URL:",
-  API_URL
-);
+//console.log("API URL:", API_URL);
 
-const api = axios.create({
+const api = create({
   baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
@@ -18,11 +14,8 @@ const api = axios.create({
 
 const authHeaders = (token) => {
   if (!token) {
-    throw new Error(
-      "Clerk token is missing"
-    );
+    throw new Error("Clerk token is missing");
   }
-
   return {
     Authorization: `Bearer ${token}`,
   };
@@ -45,23 +38,11 @@ export const getLeads = async (token) => {
       },
     });
 
-    console.log(
-      "GET /api/leads status:",
-      response.status
-    );
-
-    console.log(
-      "GET /api/leads data:",
-      response.data
-    );
-
+    //console.log("GET /api/leads status:", response.status);
+    //console.log("GET /api/leads data:", response.data);
     return response.data;
   } catch (error) {
-    console.log(
-      "Get leads API error:",
-      error.response?.data || error.message
-    );
-
+    //console.log("Get leads API error:", error.response?.data || error.message);
     throw error;
   }
 };
@@ -70,27 +51,18 @@ export const getLeads = async (token) => {
 // DELETE LEAD
 // =========================
 
-export const deleteLead = async (
-  token,
-  leadId
-) => {
+export const deleteLead = async (token, leadId) => {
   try {
-    const response = await api.delete(
-      `/api/leads/${leadId}`,
-      {
-        headers: authHeaders(token),
-      }
-    );
-
+    const response = await api.delete(`/api/leads/${leadId}`, {
+      headers: authHeaders(token),
+    });
     return response.data;
   } catch (error) {
-    console.log(
-      "Delete lead API error:",
-      error.response?.status,
-      error.response?.data ||
-        error.message
-    );
-
+    // console.log(
+    //   "Delete lead API error:",
+    //   error.response?.status,
+    //   error.response?.data || error.message,
+    // );
     throw error;
   }
 };
