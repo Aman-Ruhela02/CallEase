@@ -1,23 +1,20 @@
 import { useAuth, useUser } from "@clerk/expo";
+import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
   Text,
-  View,
-  Alert,
-  Linking, 
-
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect } from "@react-navigation/native";
 
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
-
 
 import { getLeads } from "../../services/api.js";
 
@@ -52,7 +49,7 @@ export default function Home() {
 
       const data = await getLeads(token);
 
-      console.log("Home leads:", data);
+      //console.log("Home leads:", data);
 
       if (data.success) {
         setLeads(data.data || []);
@@ -60,8 +57,8 @@ export default function Home() {
         setError(data.message || "Failed to fetch leads");
       }
     } catch (error) {
-      console.log("Home get leads error:", error);
-      setError("Unable to fetch leads");
+      //console.log("Home get leads error:", error);
+      setError(`Unable to fetch leads: ${error}`);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -77,7 +74,7 @@ export default function Home() {
       if (isLoaded && isSignedIn) {
         fetchLeads();
       }
-    }, [isLoaded, isSignedIn])
+    }, [isLoaded, isSignedIn]),
   );
 
   // --------------------------------
@@ -96,294 +93,245 @@ export default function Home() {
   const recentLeads = leads.slice(0, 3);
 
   const handlePickCSV = async () => {
-  try {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: "*/*",
-      copyToCacheDirectory: true,
-    });
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "*/*",
+        copyToCacheDirectory: true,
+      });
 
-    if (result.canceled) return;
+      if (result.canceled) return;
 
-    const file = result.assets[0];
+      const file = result.assets[0];
 
-    if (!file.name.toLowerCase().endsWith(".csv")) {
-      Alert.alert("Invalid file", "Please select a CSV file.");
-      return;
+      if (!file.name.toLowerCase().endsWith(".csv")) {
+        Alert.alert("Invalid file", "Please select a CSV file.");
+        return;
+      }
+
+      await uploadCSV(file);
+    } catch (error) {
+      console.log("CSV picker error:", error);
+      Alert.alert("Error", "Unable to select CSV file");
     }
+  };
 
-    await uploadCSV(file);
-  } catch (error) {
-    console.log("CSV picker error:", error);
-    Alert.alert("Error", "Unable to select CSV file");
-  }
-};
+  // -------------------------
+  // UPLOAD CSV
+  // -------------------------
+  const uploadCSV = async (file: any) => {
+    try {
+      const token = await getToken();
 
-// -------------------------
-// UPLOAD CSV
-// -------------------------
-const uploadCSV = async (file: any) => {
-  try {
-    const token = await getToken();
+      if (!token) {
+        Alert.alert("Authentication Error", "Token not available");
+        return;
+      }
 
-    if (!token) {
-      Alert.alert("Authentication Error", "Token not available");
-      return;
-    }
+      const formData = new FormData();
 
-    const formData = new FormData();
+      formData.append("file", {
+        uri: file.uri,
+        name: file.name || "leads.csv",
+        type: file.mimeType || "text/csv",
+      } as any);
 
-    formData.append("file", {
-      uri: file.uri,
-      name: file.name || "leads.csv",
-      type: file.mimeType || "text/csv",
-    } as any);
+      //console.log("Uploading CSV from Home...");
 
-    console.log("Uploading CSV from Home...");
-
-    const response = await fetch(
-      `${API_URL}/api/upload/csv`,
-      {
+      const response = await fetch(`${API_URL}/api/upload/csv`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
         },
         body: formData,
+      });
+
+      const data = await response.json();
+
+      //console.log("CSV upload response:", data);
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "CSV upload failed");
       }
-    );
 
-    const data = await response.json();
+      Alert.alert("Success", `${data.count} leads imported successfully`);
 
-    console.log("CSV upload response:", data);
+      // Refresh dashboard/leads
+      await fetchLeads();
+    } catch (error: any) {
+      //console.log("CSV upload error:", error);
 
-    if (!response.ok || !data.success) {
-      throw new Error(data.message || "CSV upload failed");
+      Alert.alert("Upload Failed", error?.message || "Unable to upload CSV");
     }
+  };
 
-    Alert.alert(
-      "Success",
-      `${data.count} leads imported successfully`
-    );
+  // -------------------------
+  // PICK EXCEL
+  // -------------------------
+  const handlePickExcel = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "*/*",
+        copyToCacheDirectory: true,
+      });
 
-    // Refresh dashboard/leads
-    await fetchLeads();
+      if (result.canceled) return;
 
-  } catch (error: any) {
-    console.log("CSV upload error:", error);
+      const file = result.assets[0];
 
-    Alert.alert(
-      "Upload Failed",
-      error?.message || "Unable to upload CSV"
-    );
-  }
-};
+      const fileName = file.name.toLowerCase();
 
-// -------------------------
-// PICK EXCEL
-// -------------------------
-const handlePickExcel = async () => {
-  try {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: "*/*",
-      copyToCacheDirectory: true,
-    });
+      if (!fileName.endsWith(".xlsx") && !fileName.endsWith(".xls")) {
+        Alert.alert(
+          "Invalid file",
+          "Please select an Excel file (.xlsx or .xls).",
+        );
+        return;
+      }
 
-    if (result.canceled) return;
+      await uploadExcel(file);
+    } catch (error) {
+      console.error("Excel picker error:", error);
 
-    const file = result.assets[0];
-
-    const fileName = file.name.toLowerCase();
-
-    if (
-      !fileName.endsWith(".xlsx") &&
-      !fileName.endsWith(".xls")
-    ) {
-      Alert.alert(
-        "Invalid file",
-        "Please select an Excel file (.xlsx or .xls)."
-      );
-      return;
+      Alert.alert("Error", "Unable to select Excel file");
     }
+  };
 
-    await uploadExcel(file);
+  // -------------------------
+  // UPLOAD EXCEL
+  // -------------------------
+  const uploadExcel = async (file: any) => {
+    try {
+      const token = await getToken();
 
-  } catch (error) {
-    console.log("Excel picker error:", error);
+      if (!token) {
+        Alert.alert("Authentication Error", "Token not available");
+        return;
+      }
 
-    Alert.alert(
-      "Error",
-      "Unable to select Excel file"
-    );
-  }
-};
+      const formData = new FormData();
 
-// -------------------------
-// UPLOAD EXCEL
-// -------------------------
-const uploadExcel = async (file: any) => {
-  try {
-    const token = await getToken();
+      formData.append("file", {
+        uri: file.uri,
+        name: file.name || "leads.xlsx",
+        type:
+          file.mimeType ||
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      } as any);
 
-    if (!token) {
-      Alert.alert(
-        "Authentication Error",
-        "Token not available"
-      );
-      return;
-    }
+      //console.log("Uploading Excel from Home...");
 
-    const formData = new FormData();
-
-    formData.append("file", {
-      uri: file.uri,
-      name: file.name || "leads.xlsx",
-      type:
-        file.mimeType ||
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    } as any);
-
-    console.log("Uploading Excel from Home...");
-
-    const response = await fetch(
-      `${API_URL}/api/upload/excel`,
-      {
+      const response = await fetch(`${API_URL}/api/upload/excel`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
         },
         body: formData,
+      });
+
+      const data = await response.json();
+
+      //console.log("Excel upload response:", data);
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Excel upload failed");
       }
-    );
 
-    const data = await response.json();
+      Alert.alert("Success", `${data.count} leads imported successfully`);
 
-    console.log("Excel upload response:", data);
+      await fetchLeads();
+    } catch (error: any) {
+      console.error("Excel upload error:", error);
 
-    if (!response.ok || !data.success) {
-      throw new Error(
-        data.message || "Excel upload failed"
-      );
+      Alert.alert("Upload Failed", error?.message || "Unable to upload Excel");
     }
+  };
 
-    Alert.alert(
-      "Success",
-      `${data.count} leads imported successfully`
-    );
+  // -------------------------
+  // PICK IMAGE
+  // -------------------------
+  const handlePickImage = async () => {
+    try {
+      const permission =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    await fetchLeads();
+      if (!permission.granted) {
+        Alert.alert(
+          "Permission required",
+          "Please allow access to your photos.",
+        );
+        return;
+      }
 
-  } catch (error: any) {
-    console.log("Excel upload error:", error);
-
-    Alert.alert(
-      "Upload Failed",
-      error?.message || "Unable to upload Excel"
-    );
-  }
-};
-
-// -------------------------
-// PICK IMAGE
-// -------------------------
-const handlePickImage = async () => {
-  try {
-    const permission =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (!permission.granted) {
-      Alert.alert(
-        "Permission required",
-        "Please allow access to your photos."
-      );
-      return;
-    }
-
-    const result =
-      await ImagePicker.launchImageLibraryAsync({
+      const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
         allowsEditing: false,
         quality: 1,
       });
 
-    if (result.canceled) return;
+      if (result.canceled) return;
 
-    const image = result.assets[0];
+      const image = result.assets[0];
 
-    console.log("Selected image:", image);
+      //console.log("Selected image:", image);
 
-    await uploadImage(image);
+      await uploadImage(image);
+    } catch (error) {
+      console.error("Image picker error:", error);
 
-  } catch (error) {
-    console.log("Image picker error:", error);
-
-    Alert.alert(
-      "Error",
-      "Unable to select image"
-    );
-  }
-};
-
-// -------------------------
-// UPLOAD IMAGE
-// -------------------------
-const uploadImage = async (image: any) => {
-  try {
-    const token = await getToken();
-
-    if (!token) {
-      Alert.alert(
-        "Authentication Error",
-        "Token not available"
-      );
-      return;
+      Alert.alert("Error", "Unable to select image");
     }
+  };
 
-    const formData = new FormData();
+  // -------------------------
+  // UPLOAD IMAGE
+  // -------------------------
+  const uploadImage = async (image: any) => {
+    try {
+      const token = await getToken();
 
-    formData.append("file", {
-      uri: image.uri,
-      name: image.fileName || "lead-image.jpg",
-      type: image.mimeType || "image/jpeg",
-    } as any);
+      if (!token) {
+        Alert.alert("Authentication Error", "Token not available");
+        return;
+      }
 
-    console.log("Uploading image from Home...");
+      const formData = new FormData();
 
-    const response = await fetch(
-      `${API_URL}/api/upload/image`,
-      {
+      formData.append("file", {
+        uri: image.uri,
+        name: image.fileName || "lead-image.jpg",
+        type: image.mimeType || "image/jpeg",
+      } as any);
+
+      //console.log("Uploading image from Home...");
+
+      const response = await fetch(`${API_URL}/api/upload/image`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
         },
         body: formData,
+      });
+
+      const data = await response.json();
+
+      ///console.log("Image upload response:", data);
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Image upload failed");
       }
-    );
 
-    const data = await response.json();
-
-    console.log("Image upload response:", data);
-
-    if (!response.ok || !data.success) {
-      throw new Error(
-        data.message || "Image upload failed"
+      Alert.alert(
+        "Success",
+        `${data.count || "Image"} leads imported successfully`,
       );
+
+      await fetchLeads();
+    } catch (error: any) {
+      console.error("Image upload error:", error);
+
+      Alert.alert("Upload Failed", error?.message || "Unable to upload image");
     }
-
-    Alert.alert(
-      "Success",
-      `${data.count || "Image"} leads imported successfully`
-    );
-
-    await fetchLeads();
-
-  } catch (error: any) {
-    console.log("Image upload error:", error);
-
-    Alert.alert(
-      "Upload Failed",
-      error?.message || "Unable to upload image"
-    );
-  }
-};
+  };
 
   // --------------------------------
   // LOADING
@@ -395,9 +343,7 @@ const uploadImage = async (image: any) => {
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" />
 
-          <Text className="mt-3 text-gray-500">
-            Loading dashboard...
-          </Text>
+          <Text className="mt-3 text-gray-500">Loading dashboard...</Text>
         </View>
       </SafeAreaView>
     );
@@ -412,23 +358,16 @@ const uploadImage = async (image: any) => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
         contentContainerStyle={{
           paddingBottom: 30,
         }}
       >
-
         {/* HEADER */}
 
         <View className="px-5 pt-5 pb-6">
-
-          <Text className="text-gray-500 text-base">
-            Welcome back 👋
-          </Text>
+          <Text className="text-gray-500 text-base">Welcome back 👋</Text>
 
           <Text className="text-3xl font-bold text-gray-900 mt-1">
             {userName}
@@ -437,30 +376,21 @@ const uploadImage = async (image: any) => {
           <Text className="text-gray-500 mt-2">
             Manage your leads and make calls easily.
           </Text>
-
         </View>
-
 
         {/* ERROR */}
 
         {error ? (
           <View className="mx-5 mb-4 bg-red-50 rounded-xl p-4">
-            <Text className="text-red-600">
-              {error}
-            </Text>
+            <Text className="text-red-600">{error}</Text>
           </View>
         ) : null}
-
 
         {/* TOTAL LEADS */}
 
         <View className="px-5">
-
           <View className="bg-blue-600 rounded-2xl p-5">
-
-            <Text className="text-blue-100 text-sm">
-              Total Leads
-            </Text>
+            <Text className="text-blue-100 text-sm">Total Leads</Text>
 
             <Text className="text-white text-4xl font-bold mt-2">
               {leads.length}
@@ -470,49 +400,33 @@ const uploadImage = async (image: any) => {
               onPress={() => router.push("/(tabs)/leads")}
               className="bg-white self-start px-4 py-2 rounded-lg mt-4"
             >
-              <Text className="text-blue-600 font-bold">
-                View Leads
-              </Text>
+              <Text className="text-blue-600 font-bold">View Leads</Text>
             </Pressable>
-
           </View>
-
         </View>
-
 
         {/* QUICK IMPORT */}
 
         <View className="px-5 mt-7">
-
           <Text className="text-xl font-bold text-gray-900 mb-4">
             Import Leads
           </Text>
 
           <View className="flex-row gap-3">
-
             {/* CSV */}
 
             <Pressable
               onPress={handlePickCSV}
               className="flex-1 bg-white rounded-2xl p-4 border border-gray-200"
             >
-
               <View className="w-12 h-12 bg-blue-100 rounded-xl items-center justify-center">
-                <Text className="text-2xl">
-                  📄
-                </Text>
+                <Text className="text-2xl">📄</Text>
               </View>
 
-              <Text className="font-bold text-gray-900 mt-3">
-                CSV
-              </Text>
+              <Text className="font-bold text-gray-900 mt-3">CSV</Text>
 
-              <Text className="text-gray-500 text-xs mt-1">
-                Import CSV
-              </Text>
-
+              <Text className="text-gray-500 text-xs mt-1">Import CSV</Text>
             </Pressable>
-
 
             {/* EXCEL */}
 
@@ -520,23 +434,14 @@ const uploadImage = async (image: any) => {
               onPress={handlePickExcel}
               className="flex-1 bg-white rounded-2xl p-4 border border-gray-200"
             >
-
               <View className="w-12 h-12 bg-green-100 rounded-xl items-center justify-center">
-                <Text className="text-2xl">
-                  📊
-                </Text>
+                <Text className="text-2xl">📊</Text>
               </View>
 
-              <Text className="font-bold text-gray-900 mt-3">
-                Excel
-              </Text>
+              <Text className="font-bold text-gray-900 mt-3">Excel</Text>
 
-              <Text className="text-gray-500 text-xs mt-1">
-                Import Excel
-              </Text>
-
+              <Text className="text-gray-500 text-xs mt-1">Import Excel</Text>
             </Pressable>
-
 
             {/* IMAGE */}
 
@@ -544,58 +449,35 @@ const uploadImage = async (image: any) => {
               onPress={handlePickImage}
               className="flex-1 bg-white rounded-2xl p-4 border border-gray-200"
             >
-
               <View className="w-12 h-12 bg-purple-100 rounded-xl items-center justify-center">
-                <Text className="text-2xl">
-                  🖼️
-                </Text>
+                <Text className="text-2xl">🖼️</Text>
               </View>
 
-              <Text className="font-bold text-gray-900 mt-3">
-                Image
-              </Text>
+              <Text className="font-bold text-gray-900 mt-3">Image</Text>
 
-              <Text className="text-gray-500 text-xs mt-1">
-                Scan leads
-              </Text>
-
+              <Text className="text-gray-500 text-xs mt-1">Scan leads</Text>
             </Pressable>
-
           </View>
-
         </View>
-
 
         {/* RECENT LEADS */}
 
         <View className="px-5 mt-7">
-
           <View className="flex-row justify-between items-center mb-4">
-
             <Text className="text-xl font-bold text-gray-900">
               Recent Leads
             </Text>
 
-            <Pressable
-              onPress={() => router.push("/(tabs)/leads")}
-            >
-              <Text className="text-blue-600 font-semibold">
-                View All
-              </Text>
+            <Pressable onPress={() => router.push("/(tabs)/leads")}>
+              <Text className="text-blue-600 font-semibold">View All</Text>
             </Pressable>
-
           </View>
-
 
           {/* NO LEADS */}
 
           {recentLeads.length === 0 ? (
-
             <View className="bg-white rounded-2xl p-6 items-center border border-gray-200">
-
-              <Text className="text-4xl">
-                📋
-              </Text>
+              <Text className="text-4xl">📋</Text>
 
               <Text className="text-gray-900 font-bold text-lg mt-3">
                 No leads yet
@@ -606,35 +488,24 @@ const uploadImage = async (image: any) => {
               </Text>
 
               <Pressable
-                onPress={() =>
-                  router.push("/(tabs)/leads")
-                }
+                onPress={() => router.push("/(tabs)/leads")}
                 className="bg-blue-600 px-6 py-3 rounded-xl mt-5"
               >
-                <Text className="text-white font-bold">
-                  Import Leads
-                </Text>
+                <Text className="text-white font-bold">Import Leads</Text>
               </Pressable>
-
             </View>
-
           ) : (
-
             <View className="gap-3">
-
               {recentLeads.map((lead) => (
-
                 <View
                   key={lead.id}
                   className="bg-white rounded-2xl p-4 border border-gray-200"
                 >
-
                   {/* NAME */}
 
                   <Text className="text-lg font-bold text-gray-900">
                     {lead.name || "-"}
                   </Text>
-
 
                   {/* PHONE */}
 
@@ -642,13 +513,11 @@ const uploadImage = async (image: any) => {
                     📞 {lead.phone || "-"}
                   </Text>
 
-
                   {/* LOCATION */}
 
                   <Text className="text-gray-500 mt-1">
                     📍 {lead.location || "-"}
                   </Text>
-
 
                   {/* CALL BUTTON */}
 
@@ -659,40 +528,25 @@ const uploadImage = async (image: any) => {
                     }}
                     className="bg-green-600 rounded-xl py-2 mt-3 items-center"
                   >
-                    <Text className="text-white font-bold">
-                      Call
-                    </Text>
+                    <Text className="text-white font-bold">Call</Text>
                   </Pressable>
-
                 </View>
-
               ))}
-
             </View>
-
           )}
-
         </View>
-
 
         {/* APP INFO */}
 
         <View className="px-5 mt-7">
-
           <View className="bg-white rounded-2xl p-5 border border-gray-200">
-
-            <Text className="text-lg font-bold text-gray-900">
-              CallEase
-            </Text>
+            <Text className="text-lg font-bold text-gray-900">CallEase</Text>
 
             <Text className="text-gray-500 mt-1">
               Simple lead management for telecallers.
             </Text>
-
           </View>
-
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );

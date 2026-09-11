@@ -6,7 +6,6 @@ const authHeaders = (token) => {
       "Clerk token is missing"
     );
   }
-
   return {
     Authorization: `Bearer ${token}`,
   };
@@ -15,13 +14,11 @@ const authHeaders = (token) => {
 // =========================
 // CSV
 // =========================
-
 export const uploadCSV = async (
   token,
   file
 ) => {
   const formData = new FormData();
-
   formData.append("file", {
     uri: file.uri,
     name:
@@ -43,14 +40,12 @@ export const uploadCSV = async (
       },
     }
   );
-
   return response.data;
 };
 
 // =========================
 // EXCEL
 // =========================
-
 export const uploadExcel = async (
   token,
   file
@@ -78,7 +73,6 @@ export const uploadExcel = async (
       },
     }
   );
-
   return response.data;
 };
 
@@ -113,6 +107,5 @@ export const uploadImage = async (
       },
     }
   );
-
   return response.data;
 };

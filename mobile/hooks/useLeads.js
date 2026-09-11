@@ -11,7 +11,6 @@ export default function useLeads() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
-
   // Prevent multiple automatic requests at the same time
   const fetchingRef = useRef(false);
 
@@ -21,66 +20,44 @@ export default function useLeads() {
       if (fetchingRef.current) {
         return;
       }
-
       if (!isLoaded) {
         return;
       }
-
       if (!isSignedIn) {
         setLoading(false);
         setError("Please sign in to view leads");
         return;
       }
-
       try {
         fetchingRef.current = true;
-
         setError("");
-
         if (isRefresh) {
           setRefreshing(true);
         } else {
           setLoading(true);
         }
-
         const token = await getToken();
-
         if (!token) {
           setError("Authentication token not available");
           return;
         }
-
-        console.log("Fetching leads...");
-
+        //console.log("Fetching leads...");
         const data = await getLeads(token);
-
-        console.log("Leads API response:", data);
-
+        //console.log("Leads API response:", data);
         if (data?.success) {
-          const receivedLeads = Array.isArray(data.data)
-            ? data.data
-            : [];
-
-          console.log(
-            "Setting leads:",
-            receivedLeads.length
-          );
-
+          const receivedLeads = Array.isArray(data.data) ? data.data : [];
+          //console.log("Setting leads:", receivedLeads.length);
           setLeads(receivedLeads);
         } else {
-          setError(
-            data?.message || "Failed to fetch leads"
-          );
+          setError(data?.message || "Failed to fetch leads");
         }
       } catch (error) {
-        console.log("error in useLeads:", error);
-        
-        console.log("Get leads error:", error);
-
+        //console.log("error in useLeads:", error);
+        //console.log("Get leads error:", error);
         setError(
           error?.response?.data?.message ||
             error?.message ||
-            "Unable to fetch leads"
+            "Unable to fetch leads",
         );
       } finally {
         fetchingRef.current = false;
@@ -88,7 +65,7 @@ export default function useLeads() {
         setRefreshing(false);
       }
     },
-    [getToken, isLoaded, isSignedIn]
+    [getToken, isLoaded, isSignedIn],
   );
 
   /*
@@ -104,9 +81,8 @@ export default function useLeads() {
       if (!isLoaded || !isSignedIn) {
         return;
       }
-
       fetchLeads(false);
-    }, [isLoaded, isSignedIn])
+    }, [isLoaded, isSignedIn,fetchLeads]),
   );
 
   const refreshLeads = useCallback(() => {
@@ -116,17 +92,13 @@ export default function useLeads() {
   return {
     leads,
     setLeads,
-
     loading,
     refreshing,
     error,
-
     fetchLeads,
     refreshLeads,
-
     isLoaded,
     isSignedIn,
-
     getToken,
   };
 }
