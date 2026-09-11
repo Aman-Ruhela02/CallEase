@@ -10,11 +10,8 @@ export const createLead = async (leads) => {
     .select();
 
   if (error) {
-    console.log("lead not creATED", error);
-
     throw error;
   }
-
   return data;
 };
 
@@ -30,7 +27,6 @@ export const getLeadsByClerkId = async (clerkUserId) => {
   if (error) {
     throw error;
   }
-
   return data;
 };
 
@@ -46,7 +42,6 @@ export const deleteLeadById = async (leadId, clerkUserId) => {
   if (error) {
     throw error;
   }
-
   return data;
 };
 
@@ -62,6 +57,5 @@ export const getLeadCountByClerkId = async (clerkUserId) => {
   if (error) {
     throw error;
   }
-
-  return count || 0;
+  return count ?? 0;
 };

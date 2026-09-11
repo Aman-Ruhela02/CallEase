@@ -61,35 +61,25 @@ export default function Leads() {
 
   const handleCall = async (phone: string) => {
     if (!phone) {
-      Alert.alert(
-        "Error",
-        "Phone number is not available"
-      );
+      Alert.alert("Error", "Phone number is not available");
       return;
     }
 
     const phoneUrl = `tel:${phone}`;
 
     try {
-      const supported =
-        await Linking.canOpenURL(phoneUrl);
+      const supported = await Linking.canOpenURL(phoneUrl);
 
       if (!supported) {
-        Alert.alert(
-          "Unable to Call",
-          "This device cannot make phone calls."
-        );
+        Alert.alert("Unable to Call", "This device cannot make phone calls.");
         return;
       }
 
       await Linking.openURL(phoneUrl);
     } catch (error) {
-      console.log("Call error:", error);
+      console.error("Call error:", error);
 
-      Alert.alert(
-        "Error",
-        "Unable to open phone dialer"
-      );
+      Alert.alert("Error", "Unable to open phone dialer");
     }
   };
 
@@ -98,21 +88,17 @@ export default function Leads() {
   // ==========================================
 
   const handleDelete = (leadId: string) => {
-    Alert.alert(
-      "Delete Lead",
-      "Are you sure you want to delete this lead?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => confirmDelete(leadId),
-        },
-      ]
-    );
+    Alert.alert("Delete Lead", "Are you sure you want to delete this lead?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => confirmDelete(leadId),
+      },
+    ]);
   };
 
   // ==========================================
@@ -126,50 +112,33 @@ export default function Leads() {
       if (!token) {
         Alert.alert(
           "Authentication Error",
-          "Authentication token not available"
+          "Authentication token not available",
         );
         return;
       }
 
-      const data = await deleteLead(
-        token,
-        leadId
-      );
+      const data = await deleteLead(token, leadId);
 
-      console.log(
-        "Delete response:",
-        data
-      );
+      //console.log("Delete response:", data);
 
       if (!data.success) {
-        throw new Error(
-          data.message ||
-            "Failed to delete lead"
-        );
+        throw new Error(data.message || "Failed to delete lead");
       }
 
       // Remove deleted lead from UI immediately
       setLeads((currentLeads) =>
-        currentLeads.filter(
-          (lead) => lead.id !== leadId
-        )
+        currentLeads.filter((lead) => lead.id !== leadId),
       );
 
-      Alert.alert(
-        "Success",
-        "Lead deleted successfully"
-      );
+      Alert.alert("Success", "Lead deleted successfully");
     } catch (error: any) {
-      console.log(
-        "Delete lead error:",
-        error
-      );
+      console.error("Delete lead error:", error);
 
       Alert.alert(
         "Delete Failed",
         error?.response?.data?.message ||
           error?.message ||
-          "Unable to delete lead"
+          "Unable to delete lead",
       );
     }
   };
@@ -182,13 +151,9 @@ export default function Leads() {
     return (
       <SafeAreaView className="flex-1 bg-gray-50">
         <View className="flex-1 justify-center items-center">
-
           <ActivityIndicator size="large" />
 
-          <Text className="mt-3 text-gray-600">
-            Loading...
-          </Text>
-
+          <Text className="mt-3 text-gray-600">Loading...</Text>
         </View>
       </SafeAreaView>
     );
@@ -202,11 +167,9 @@ export default function Leads() {
     return (
       <SafeAreaView className="flex-1 bg-gray-50">
         <View className="flex-1 justify-center items-center px-6">
-
           <Text className="text-gray-600 text-center">
             Please sign in to view your leads.
           </Text>
-
         </View>
       </SafeAreaView>
     );
@@ -220,13 +183,9 @@ export default function Leads() {
     return (
       <SafeAreaView className="flex-1 bg-gray-50">
         <View className="flex-1 justify-center items-center">
-
           <ActivityIndicator size="large" />
 
-          <Text className="mt-3 text-gray-600">
-            Loading leads...
-          </Text>
-
+          <Text className="mt-3 text-gray-600">Loading leads...</Text>
         </View>
       </SafeAreaView>
     );
@@ -238,45 +197,33 @@ export default function Leads() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
-
       {/* =====================================
           HEADER
       ====================================== */}
 
       <View className="px-4 pt-4 pb-3 bg-white border-b border-gray-200">
-
         <View className="flex-row justify-between items-center">
-
           <View className="flex-1">
-
-            <Text className="text-2xl font-bold text-gray-900">
-              Leads
-            </Text>
+            <Text className="text-2xl font-bold text-gray-900">Leads</Text>
 
             <Text className="text-sm text-gray-500 mt-1">
               Manage your leads
             </Text>
-
           </View>
 
           {/* UPLOAD BUTTONS */}
 
           <View className="flex-row gap-2">
-
             {/* CSV */}
 
             <Pressable
               onPress={pickCSV}
               disabled={uploading}
               className={`px-3 py-2 rounded-lg ${
-                uploading
-                  ? "bg-blue-300"
-                  : "bg-blue-600"
+                uploading ? "bg-blue-300" : "bg-blue-600"
               }`}
             >
-              <Text className="text-white font-bold">
-                CSV
-              </Text>
+              <Text className="text-white font-bold">CSV</Text>
             </Pressable>
 
             {/* EXCEL */}
@@ -285,14 +232,10 @@ export default function Leads() {
               onPress={pickExcel}
               disabled={uploading}
               className={`px-3 py-2 rounded-lg ${
-                uploading
-                  ? "bg-green-300"
-                  : "bg-green-600"
+                uploading ? "bg-green-300" : "bg-green-600"
               }`}
             >
-              <Text className="text-white font-bold">
-                Excel
-              </Text>
+              <Text className="text-white font-bold">Excel</Text>
             </Pressable>
 
             {/* IMAGE */}
@@ -301,20 +244,13 @@ export default function Leads() {
               onPress={pickImage}
               disabled={uploading}
               className={`px-3 py-2 rounded-lg ${
-                uploading
-                  ? "bg-purple-300"
-                  : "bg-purple-600"
+                uploading ? "bg-purple-300" : "bg-purple-600"
               }`}
             >
-              <Text className="text-white font-bold">
-                Image
-              </Text>
+              <Text className="text-white font-bold">Image</Text>
             </Pressable>
-
           </View>
-
         </View>
-
       </View>
 
       {/* =====================================
@@ -323,13 +259,9 @@ export default function Leads() {
 
       {uploading && (
         <View className="px-4 py-3 bg-white border-b border-gray-200 flex-row items-center">
-
           <ActivityIndicator size="small" />
 
-          <Text className="ml-2 text-gray-600">
-            Uploading leads...
-          </Text>
-
+          <Text className="ml-2 text-gray-600">Uploading leads...</Text>
         </View>
       )}
 
@@ -339,11 +271,7 @@ export default function Leads() {
 
       {error ? (
         <View className="mx-4 mt-3 p-3 bg-red-50 border border-red-200 rounded-xl">
-
-          <Text className="text-red-600">
-            {error}
-          </Text>
-
+          <Text className="text-red-600">{error}</Text>
         </View>
       ) : null}
 
@@ -352,9 +280,7 @@ export default function Leads() {
       ====================================== */}
 
       {leads.length === 0 ? (
-
         <View className="flex-1 justify-center items-center px-6">
-
           <Text className="text-xl font-bold text-gray-700">
             No leads found
           </Text>
@@ -368,15 +294,10 @@ export default function Leads() {
             disabled={uploading}
             className="bg-blue-600 px-6 py-3 rounded-xl"
           >
-            <Text className="text-white font-bold">
-              Import CSV
-            </Text>
+            <Text className="text-white font-bold">Import CSV</Text>
           </Pressable>
-
         </View>
-
       ) : (
-
         /* =====================================
             LEAD LIST
         ====================================== */
@@ -388,9 +309,7 @@ export default function Leads() {
           onCall={handleCall}
           onDelete={handleDelete}
         />
-
       )}
-
     </SafeAreaView>
   );
 }

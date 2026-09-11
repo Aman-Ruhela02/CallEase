@@ -4,17 +4,14 @@ import "../../global.css";
 
 export default function TabsLayout() {
   const { isLoaded, isSignedIn } = useAuth();
-
   // Wait for Clerk to load
   if (!isLoaded) {
     return null;
   }
-
   // User is not authenticated
   if (!isSignedIn) {
     return <Redirect href="/(auth)/sign-in" />;
   }
-
   // User is authenticated → show tabs
   return (
     <Tabs
