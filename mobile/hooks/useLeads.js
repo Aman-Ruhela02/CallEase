@@ -82,7 +82,8 @@ export default function useLeads() {
         return;
       }
       fetchLeads(false);
-    }, [isLoaded, isSignedIn,fetchLeads]),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isLoaded, isSignedIn]),
   );
 
   const refreshLeads = useCallback(() => {
