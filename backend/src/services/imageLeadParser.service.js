@@ -100,9 +100,7 @@ const containsNumbers = (line) => {
 
 const isMostlyNumeric = (line) => {
   const digits = (line.match(/\d/g) || []).length;
-
   const letters = (line.match(/[a-zA-Z]/g) || []).length;
-
   return digits > letters;
 };
 
