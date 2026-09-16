@@ -26,9 +26,16 @@ export const saveUserLeads = async ({ clerkUserId, leads }) => {
     }));
 
   if (!leadsWithUser.length) {
-    return [];
+    return { data: [], count: 0, skipped: 0 };
   }
-  return await createLead(leadsWithUser);
+  const data = await createLead(leadsWithUser);
+  const savedLeads = data || []; // guard against null from ignoreDuplicates skipping all rows
+
+  return {
+    data: savedLeads,
+    count: savedLeads.length,
+    skipped: leadsWithUser.length - savedLeads.length,
+  };
 };
 
 export const getUserLeads = async (clerkUserId) => {

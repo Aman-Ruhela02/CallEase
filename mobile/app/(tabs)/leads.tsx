@@ -76,8 +76,8 @@ export default function Leads() {
       }
 
       await Linking.openURL(phoneUrl);
-    } catch (error) {
-      console.error("Call error:", error);
+    } catch (err) {
+      console.error("Call error:", err);
 
       Alert.alert("Error", "Unable to open phone dialer");
     }
@@ -131,14 +131,12 @@ export default function Leads() {
       );
 
       Alert.alert("Success", "Lead deleted successfully");
-    } catch (error: any) {
-      console.error("Delete lead error:", error);
+    } catch (err: any) {
+      console.error("Delete lead error:", err);
 
       Alert.alert(
         "Delete Failed",
-        error?.response?.data?.message ||
-          error?.message ||
-          "Unable to delete lead",
+        err?.response?.data?.message || err?.message || "Unable to delete lead"
       );
     }
   };

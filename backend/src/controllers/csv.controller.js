@@ -12,7 +12,7 @@ export const uploadCSV = async (req, res, next) => {
       return errorResponse(res, "User is not authenticated", 401);
     }
     const leads = await parseCSV(req.file.buffer);
-    const validRows = leads.filter((lead) => lead.name || lead.phone || lead.location)
+    const validRows = leads.filter((lead) => lead.name || lead.phone || lead.location);
     if (!validRows.length) {
       return errorResponse(res, "CSV file contains no lead data", 400);
     }
@@ -20,8 +20,13 @@ export const uploadCSV = async (req, res, next) => {
     if (invalidLeads.length > 0) {
       return errorResponse(res, "Some rows are missing phone numbers", 400, { invalidCount: invalidLeads.length });
     }
-    const savedLeads = await saveUserLeads({ clerkUserId, leads: validRows });
-    return successResponse(res, { count: savedLeads.length, data: savedLeads }, "CSV uploaded and leads saved successfully", 201);
+
+    const { data: savedLeads, count, skipped } = await saveUserLeads({ clerkUserId, leads: validRows });
+
+    return successResponse(res,
+      { count, skipped, data: savedLeads },
+      skipped > 0 ? `${count} leads imported, ${skipped} duplicates skipped` : "CSV uploaded and leads saved successfully",
+      201);
   } catch (error) {
     next(error);
   }

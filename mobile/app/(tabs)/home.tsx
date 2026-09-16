@@ -74,6 +74,7 @@ export default function Home() {
       if (isLoaded && isSignedIn) {
         fetchLeads();
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isLoaded, isSignedIn]),
   );
 
@@ -153,7 +154,12 @@ export default function Home() {
         throw new Error(data.message || "CSV upload failed");
       }
 
-      Alert.alert("Success", `${data.count} leads imported successfully`);
+      Alert.alert(
+        "Success",
+        data.skipped > 0
+          ? `${data.count} new leads imported (${data.skipped} duplicates skipped)`
+          : `${data.count} leads imported successfully`,
+      );
 
       // Refresh dashboard/leads
       await fetchLeads();
